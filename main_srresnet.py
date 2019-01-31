@@ -55,6 +55,7 @@ def main():
     print("===> Loading datasets")
     train_set = KITTIDataset(opt.gt, opt.input, opt.mask)
     training_data_loader = DataLoader(dataset=train_set, num_workers=opt.threads, batch_size=opt.batchSize, shuffle=True)
+    print("Loaded {0} training images".format(len(train_set)))
 
     # if opt.vgg_loss:
     #     print('===> Loading VGG model')
@@ -75,8 +76,8 @@ def main():
     model = _NetG()
     criterion = nn.MSELoss(size_average=False)
 
-    print("===> Setting GPU")
     if cuda:
+        print("===> Setting GPU")
         model = model.cuda()
         criterion = criterion.cuda()
         if opt.vgg_loss:
@@ -105,7 +106,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
 
     print("===> Training")
-    for epoch in range(opt.start_epoch, opt.nEpochs + 1):
+    for epoch in (range(opt.start_epoch, opt.nEpochs + 1)):
         train(training_data_loader, optimizer, model, criterion, epoch)
         save_checkpoint(model, epoch)
 
@@ -127,13 +128,13 @@ def train(training_data_loader, optimizer, model, criterion, epoch):
     for iteration, batch in enumerate(training_data_loader, 1):
 
         inp, target, mask = Variable(batch[0]), Variable(batch[1], requires_grad=False), Variable(batch[2], requires_grad=False)
-
         if opt.cuda:
             inp = inp.cuda()
             target = target.cuda()
+            mask = mask.cuda()
 
         output = model(inp)
-        loss = criterion(output[mask], target[mask])
+        loss = criterion(output * mask, target * mask)
 
         # if opt.vgg_loss:
         #     content_input = netContent(output)
@@ -151,11 +152,11 @@ def train(training_data_loader, optimizer, model, criterion, epoch):
 
         optimizer.step()
 
-        if iteration % 100 == 0:
+        if iteration % 10 == 0:
             if opt.vgg_loss:
-                print("===> Epoch[{}]({}/{}): Loss: {:.5} Content_loss {:.5}".format(epoch, iteration, len(training_data_loader), loss.data[0], content_loss.data[0]))
+                print("===> Epoch[{}]({}/{}): Loss: {:.5} Content_loss {:.5}".format(epoch, iteration, len(training_data_loader), loss.data.item(), content_loss.data[0]))
             else:
-                print("===> Epoch[{}]({}/{}): Loss: {:.5}".format(epoch, iteration, len(training_data_loader), loss.data[0]))
+                print("===> Epoch[{}]({}/{}): Loss: {:.5}".format(epoch, iteration, len(training_data_loader), loss.data.item()))
 
 def save_checkpoint(model, epoch):
     model_out_path = "checkpoint/" + "model_epoch_{}.pth".format(epoch)
