@@ -6,6 +6,7 @@ import time, math
 import matplotlib.pyplot as plt
 from PIL import Image
 import torchvision.transforms as transforms
+import torchvision.utils as utils
 
 parser = argparse.ArgumentParser(description="PyTorch SRResNet Demo")
 parser.add_argument("--cuda", action="store_true", help="use cuda?")
@@ -59,21 +60,22 @@ out = model(im_l)
 # elapsed_time = time.time() - start_time
 
 out = out.cpu()
-im_h = out.data[0].numpy().astype(np.float32)
+utils.save_image(out, 'out.png')
+#im_h = out.data[0].numpy().astype(np.float32)
 
-im_h = im_h*255.
-im_h[im_h<0] = 0
-im_h[im_h>255.] = 255.            
-im_h = im_h.transpose(1,2,0)
+#im_h = im_h*255.
+#im_h[im_h<0] = 0
+#im_h[im_h>255.] = 255.
+#im_h = im_h.transpose(1,2,0)
 
-im_gt = np.array(im_gt)
+# im_gt = np.array(im_gt)
 
-fig = plt.figure()
-ax = plt.subplot("131")
-ax.imshow(im_gt)
-ax.set_title("GT")
+#fig = plt.figure()
+#ax = plt.subplot("131")
+#ax.imshow(im_gt)
+#ax.set_title("GT")
 
-ax = plt.subplot("132")
-ax.imshow(im_h.astype(np.uint8))
-ax.set_title("Output(SRResNet)")
-plt.show()
+#ax = plt.subplot("132")
+#ax.imshow(im_h.astype(np.uint8))
+#ax.set_title("Output(SRResNet)")
+#plt.show()
