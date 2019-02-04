@@ -26,7 +26,6 @@ args = parser.parse_args()
 
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 src_dir = os.path.join(curr_dir, args.src)
-img_files = os.listdir(src_dir)
 target_dir = os.path.join(curr_dir, 'lr_x{0}/'.format(args.factor))
 
 if not os.path.exists(target_dir):
@@ -34,13 +33,12 @@ if not os.path.exists(target_dir):
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 tr = transforms.ToTensor();
-
 conv = torch.nn.Conv2d(1, 1, 5, padding=2, bias=False)
 with torch.no_grad():
-	conv.weight.data[0][0] = torch.from_numpy(gauss2d((5,5)))
+	conv.weight.data[0][0] = torch.from_numpy(gauss2d((5,5), sigma=1.0))
 conv.to(device)
 
-for name in img_files[0:1]:
+for name in os.listdir(src_dir)[0:1]:
 	img = Image.open(os.path.join(src_dir, name)).convert('RGB')
 	w, h = img.size
 	img = tr(img.resize((w//args.factor, h//args.factor), resample=Image.BICUBIC)).to(device)

@@ -56,13 +56,16 @@ class _NetG(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        print(x.shape)
         out = self.relu(self.conv_input(x))
         residual = out
         out = self.residual(out)
         out = self.bn_mid(self.conv_mid(out))
         out = torch.add(out,residual)
+        print(out.shape)
         out = self.upscale4x(out)
         out = self.conv_output(out)
+        print(out.shape)
         return out
 
 class _NetD(nn.Module):
