@@ -8,6 +8,13 @@ from PIL import Image
 MEAN = [0.35671806, 0.3557934, 0.33836347]
 STD = [0.20286339, 0.20125221, 0.20376566]
 
+# reverses the earlier normalization applied to the image to prepare output
+def unnormalize(x):
+	x.transpose_(1, 3)
+	x = x * torch.Tensor(STD) + torch.Tensor(MEAN)
+	x.transpose_(1, 3)
+	return x
+
 class KITTIDataset(torch.utils.data.Dataset):
 	def __init__(self, gt_path, lr_path, mask_path):
 		super().__init__()
@@ -33,7 +40,7 @@ class KITTIDataset(torch.utils.data.Dataset):
 			mask = mask.resize((w, h-1), resample=Image.BICUBIC)
           
 		gt = self.img_transform(gt)
-		mask = self.img_transform(mask)
+		mask = self.mask_transform(mask)
 		
 		lr = Image.open(self.lr_imgs[index]).convert('RGB')
 		lr = self.img_transform(lr)

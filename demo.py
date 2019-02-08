@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import torchvision.transforms as transforms
 import torchvision.utils as utils
+from dataset import unnormalize
 
 parser = argparse.ArgumentParser(description="PyTorch SRResNet Demo")
 parser.add_argument("--cuda", action="store_true", help="use cuda?")
-parser.add_argument("--model", default="checkpoint/model_epoch_194.pth", type=str, help="model path")
+parser.add_argument("--model", default="checkpoint/model_epoch_250.pth", type=str, help="model path")
 parser.add_argument("--data", default="testsets/", type=str, help="dataset name")
 parser.add_argument("--scale", default=2, type=int, help="scale factor, Default: 2")
 parser.add_argument("--gpus", default="0", type=str, help="gpu ids (default: 0)")
@@ -34,9 +35,10 @@ if cuda:
     if not torch.cuda.is_available():
             raise Exception("No GPU found or Wrong gpu id, please run without --cuda")
 
+name = "0000000055.png"
 model = torch.load(opt.model, map_location='cpu')["model"]
-im_gt = Image.open(opt.data + "gt/" + "0000000005.png").convert('RGB')
-im_l = Image.open(opt.data + "lr/" + "0000000005.png").convert('RGB')
+im_gt = Image.open(opt.data + "gt/" + name).convert('RGB')
+im_l = Image.open(opt.data + "lr/" + name).convert('RGB')
 
 # w,h = im_gt.size
 # if w % 2 != 0:
@@ -60,7 +62,7 @@ out = model(im_l)
 # elapsed_time = time.time() - start_time
 
 out = out.cpu()
-utils.save_image(out, 'out.png')
+utils.save_image(unnormalize(out), name)
 #im_h = out.data[0].numpy().astype(np.float32)
 
 #im_h = im_h*255.
