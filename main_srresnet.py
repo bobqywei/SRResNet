@@ -8,7 +8,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from srresnet import _NetG
-from dataset import KITTIDataset
+from dataset import KITTIDataset, unnormalize
 from torchvision import models
 from tensorboardX import SummaryWriter
 import torch.utils.model_zoo as model_zoo
@@ -156,7 +156,7 @@ def train(training_data_loader, optimizer, model, criterion, epoch, writer, batc
         overall_iter = iteration * batch_size + (epoch - 1) * len(training_data_loader)
 
         if overall_iter % len(training_data_loader) == 0:
-            writer.add_image("SR_output", output[0], epoch)
+            writer.add_image("SR_output", unnormalize(output[0]), epoch)
 
         if iteration % 10 == 0:
             if opt.vgg_loss:
