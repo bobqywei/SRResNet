@@ -28,9 +28,9 @@ parser.add_argument("--vgg_loss", action="store_true", help="Use content loss?")
 parser.add_argument("--gpus", default="0", type=str, help="gpu ids (default: 0)")
 
 parser.add_argument("--save_epoch", default=10, type=int, help="number of epochs for each save")
-parser.add_argument("--gt", type=str, default="data/rgb/", help="ground truth images directory")
-parser.add_argument("--mask", type=str, default="data/masks/d_level_1/", help="mask images directory")
-parser.add_argument("--input", type=str, default="data/lr_down_x2", help="input images directory")
+parser.add_argument("--gt", type=str, default="data/lr_x2/", help="ground truth images directory")
+parser.add_argument("--mask", type=str, default="data/masks/", help="mask images directory")
+parser.add_argument("--input", type=str, default="data/lr_x4", help="input images directory")
 parser.add_argument("--ckpt_dir", type=str, default="checkpoints/", help="directory to store saved models")
 parser.add_argument("--log_dir", type=str, default="tensorboard/", help="tensorboard directory")
 parser.add_argument("--name", type=str, help="name of current run")
@@ -153,10 +153,11 @@ def train(training_data_loader, optimizer, model, criterion, epoch, writer, batc
         loss.backward()
         optimizer.step()
 
-        overall_iter = iteration * batch_size + (epoch - 1) * len(training_data_loader)
+        overall_iter = iteration * batch_size + (epoch - 1) * len(training_data_loader) * batch_size
 
-        if overall_iter % len(5 * training_data_loader) == 0:
-            writer.add_image("SR_output", unnormalize(output[0]), epoch)
+        if overall_iter % (10 * batch_size * len(training_data_loader)) == 0:
+            out_image = output[0].unsqueeze(0)
+            writer.add_image("SR_output", unnormalize(out_image).squeeze(), epoch)
 
         if iteration % 10 == 0:
             if opt.vgg_loss:

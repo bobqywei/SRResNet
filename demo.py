@@ -40,7 +40,7 @@ if cuda:
 
 model = torch.load(os.path.join("checkpoints", opt.name, "model_epoch_{0}.pth").format(opt.epoch), map_location='cpu')["model"]
 imgs = glob.glob(os.path.join(opt.data, "lr", "*.png"))
-output_dir = os.path.join("inference", opt.name, str(opt.epoch))
+output_dir = os.path.join("inference_test", opt.name, str(opt.epoch))
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
