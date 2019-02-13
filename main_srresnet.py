@@ -155,7 +155,7 @@ def train(training_data_loader, optimizer, model, criterion, epoch, writer, batc
 
         overall_iter = iteration * batch_size + (epoch - 1) * len(training_data_loader)
 
-        if overall_iter % len(training_data_loader) == 0:
+        if overall_iter % len(5 * training_data_loader) == 0:
             writer.add_image("SR_output", unnormalize(output[0]), epoch)
 
         if iteration % 10 == 0:
