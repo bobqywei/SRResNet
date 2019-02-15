@@ -47,8 +47,8 @@ if not os.path.exists(output_dir):
 avg_psnr_bicubic = 0.0
 avg_psnr_sr = 0.0
 
-for img_path in imgs:
-    img_name = img_path.split("/lr/")[1]
+for i in tqdm(range(50)):#len(imgs))):
+    img_name = imgs[i].split("/lr/")[1]
 
     im_gt = Image.open(opt.data + "gt/" + img_name).convert('RGB')
     w,h = im_gt.size
@@ -56,7 +56,7 @@ for img_path in imgs:
         im_gt = im_gt.resize((w-1, h), resample=Image.BICUBIC)
     if h % 2 != 0:
         im_gt = im_gt.resize((w, h-1), resample=Image.BICUBIC)
-    im_l = Image.open(img_path).convert('RGB')
+    im_l = Image.open(imgs[i]).convert('RGB')
 
     im_b_np = np.array(im_l.resize(im_gt.size, resample=Image.BICUBIC)).astype(float)
     im_gt_np = np.array(im_gt).astype(float)
