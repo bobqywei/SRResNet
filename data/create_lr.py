@@ -4,9 +4,9 @@ import argparse
 import torch
 
 from PIL import Image
+from tqdm import tqdm
 from torchvision import transforms
 from torchvision.utils import save_image
-
 
 def gauss2d(shape, sigma=1.0):
     m, n = [(ss-1.)/2. for ss in shape]
@@ -18,16 +18,16 @@ def gauss2d(shape, sigma=1.0):
         h /= sumh
     return h
 
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--src', type=str, help='source directory')
-parser.add_argument('--factor', type=int, default=2, help='factor to downsample by')
+parser.add_argument('--src', type=str)
+parser.add_argument('--name', type=str)
+parser.add_argument('--factor', type=int, default=2)
 parser.add_argument('--gauss', action='store_true')
 args = parser.parse_args()
 
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 src_dir = os.path.join(curr_dir, args.src)
-target_dir = os.path.join(curr_dir, 'lr_x{0}/'.format(args.factor))
+target_dir = os.path.join(curr_dir, args.name)
 
 if not os.path.exists(target_dir):
 	os.makedirs(target_dir)
@@ -40,9 +40,15 @@ if args.gauss:
         conv.weight.data[0][0] = torch.from_numpy(gauss2d((5,5), sigma=1.0))
     conv.to(device)
 
-for name in os.listdir(src_dir):
-    img = Image.open(os.path.join(src_dir, name)).convert('RGB')
+img_names = os.listdir(src_dir)
+for i in tqdm(range(len(img_names))):
+    img = Image.open(os.path.join(src_dir, img_names[i])).convert('RGB')
     w, h = img.size
+    if w != 1244 or h != 376:
+        img = img.resize((1244, 376))
+        img.save(os.path.join(src_dir, img_names[i]))
+        w, h = (1244, 376)
+        
     img = img.resize((w//args.factor, h//args.factor), resample=Image.BICUBIC)
 
     if args.gauss:
@@ -53,6 +59,6 @@ for name in os.listdir(src_dir):
         img_G = conv(torch.unsqueeze(img[:,1,:,:], 0))
         img_B = conv(torch.unsqueeze(img[:,2,:,:], 0))
         img = torch.cat((img_R, img_G, img_B), 1)
-        save_image(img, os.path.join(target_dir, name))
+        save_image(img, os.path.join(target_dir, img_names[i]))
     else:
-        img.save(os.path.join(target_dir, name))
+        img.save(os.path.join(target_dir, img_names[i]))
