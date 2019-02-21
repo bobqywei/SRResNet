@@ -24,8 +24,6 @@ zipfiles = {
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", default="https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/", type=str)
 parser.add_argument("--img_per_scene", type=int, default=10)
-# parser.add_argument("--date", type=str, default="2011_09_26")
-# parser.add_argument("--drive", type=int, default=1)
 parser.add_argument("--dest", type=str, default="/home/bobw/val/rgb/")
 parser.add_argument("--depth", type=str, default="/home/bobw/val/depth_16bit/")
 parser.add_argument("--d_src", type=str, default="/home/bobw/kitti_depth/")
@@ -48,7 +46,6 @@ for date, drivelist in zipfiles.items():
 		depth_path = os.path.join(args.d_src, "val", name, "proj_depth", "groundtruth", "image_02/")
 		imgs = glob.glob(depth_path + "*.png")
 		imgs = random.sample(imgs, args.img_per_scene)
-		# imgs = [x for x in file.namelist() if x.startswith(os.path.join(date, name, "image_02", "data/"))]
 
 		for d_img in imgs:
 			img = os.path.join(date, name, "image_02", "data", d_img.split(depth_path)[1])
