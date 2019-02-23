@@ -5,8 +5,11 @@ import torchvision.transforms as transforms
 
 from PIL import Image
 
-MEAN = [0.37159888, 0.38509135, 0.3721678]
-STD = [0.1006065,  0.10916227, 0.11465776]
+# MEAN = [0.37159888, 0.38509135, 0.3721678]
+# STD = [0.1006065,  0.10916227, 0.11465776]
+
+MEAN = [0.5, 0.5, 0.5]
+STD = [0.5, 0.5, 0.5]
 
 # reverses the earlier normalization applied to the image to prepare output
 def unnormalize(x):

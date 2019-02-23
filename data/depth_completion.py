@@ -3,8 +3,21 @@ import numpy as np
 
 from tqdm import tqdm
 from PIL import Image
-from scipy import ndimage, interpolate
+from scipy import ndimage, interpolate, spatial
 from sklearn.neighbors import KDTree
+
+def interpolate_with_plane(i_NN, d_NN, i_interp):
+    xyz_NN = np.concatenate((i_NN, np.expand_dims(d_NN, axis=2)), axis=2)
+    normal_vect = np.cross((xyz_NN[:,1,:] - xyz_NN[:,0,:]), (xyz_NN[:,2,:] - xyz_NN[:,0,:]), axisa=1, axisb=1)
+    c_value = np.sum(normal_vect * xyz_NN[:,0,:], axis=1)
+    return (c_value - np.sum(normal_vect[:,:-1] * i_interp, axis=1)) / normal_vect[:,2]
+
+def weights_by_dist(i_NN, i_interp):
+    dist1 = np.sqrt(np.square(i_NN[:,0,0] - i_interp[:,0]) + np.square(i_NN[:,0,1] - i_interp[:,1]))
+    dist2 = np.sqrt(np.square(i_NN[:,1,0] - i_interp[:,0]) + np.square(i_NN[:,1,1] - i_interp[:,1]))
+    dist3 = np.sqrt(np.square(i_NN[:,2,0] - i_interp[:,0]) + np.square(i_NN[:,2,1] - i_interp[:,1]))
+    total = dist3 + dist1 + dist2
+    return np.column_stack((dist1/total, dist2/total, dist3/total))
 
 def barycentric_interpolate(i_NN, d_NN, i_interp):
     # Compute denominator and numerators for calculating coords/weights of two nearest points
@@ -26,21 +39,13 @@ def barycentric_interpolate(i_NN, d_NN, i_interp):
     # Don't interpolate points that are outside of triangle formed by 3 NN points
     barycentric_coords = np.column_stack((w1,w2,w3))
     outside_triangle = np.min(barycentric_coords, axis=1) < 0
-    barycentric_coords[outside_triangle] = np.array([1.0, 0.0, 0.0])
+    barycentric_coords[outside_triangle] = weights_by_dist(i_NN[outside_triangle], i_interp[outside_triangle])
 
-    # print('# of points outside of NN triangle filtered out: {0}'.format(np.sum(~inside_triangle)))
-    # barycentric_coords[inside_triangle] = np.array([1.0, 0.0, 0.0])
+    # Nearest Neighbor Method
+    # barycentric_coords[outside_triangle] = np.array([1.0, 0.0, 0.0])
 
     # Calculate the new interpolated depth value
-    # weighted_depth = np.sum(barycentric_coords[inside_triangle] * d_NN[inside_triangle], axis=1)
-    weighted_depth = np.sum(barycentric_coords * d_NN, axis=1)
-    # i_outside = i_interp[outside_triangle]
-    # i_NN_outside, d_NN_outside = i_NN[outside_triangle], d_NN[outside_triangle]
-    # for i in range(i_outside.shape[0]):
-    #     f = interpolate.interp2d(i_NN_outside[i,:,0], i_NN_outside[i,:,1], d_NN_outside[i])
-    #     weighted_depth[outside_triangle][i] = f(i_outside[i][0], i_outside[i][1])
-
-    return weighted_depth#, i_interp[inside_triangle]
+    return np.sum(barycentric_coords * d_NN, axis=1)
 
 def depth_complete(img, dilation_iters=10):
     has_depth = img != 0
@@ -72,23 +77,24 @@ def depth_complete(img, dilation_iters=10):
 
     return img
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--src', type=str, default='depth_16bit/')
-parser.add_argument('--dest', type=str, default='depth_16bit_comp/')
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--src', type=str, default='depth_16bit/')
+    parser.add_argument('--dest', type=str, default='depth_16bit_comp_dist/')
+    args = parser.parse_args()
 
-if not os.path.exists(args.dest):
-    os.makedirs(args.dest)
+    if not os.path.exists(args.dest):
+        os.makedirs(args.dest)
 
-depth_maps = glob.glob(os.path.join(args.src, '*.png'))
-for i in tqdm(range(len(depth_maps))):
-    d = np.array(Image.open(depth_maps[i]))
-    name = depth_maps[i].split(args.src)[1].lstrip('/')
-    d = Image.fromarray(depth_complete(d))
-    d.save(os.path.join(args.dest, name))
+    depth_maps = glob.glob(os.path.join(args.src, '*.png'))
+    for i in tqdm(range(len(depth_maps))):
+        d = np.array(Image.open(depth_maps[i]))
+        name = depth_maps[i].split(args.src)[1].lstrip('/')
+        d = Image.fromarray(depth_complete(d))
+        d.save(os.path.join(args.dest, name))
 
-# img = Image.open(os.path.join(args.src, '3.png'))
-# img = np.array(img)
-# img = depth_complete(img)
-# img = Image.fromarray(img)
-# img.save('test.png')
+    # img = Image.open(os.path.join(args.src, '82.png'))
+    # img = np.array(img)
+    # img = depth_complete(img)
+    # img = Image.fromarray(img)
+    # img.save('test.png')

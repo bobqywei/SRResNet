@@ -26,7 +26,7 @@ def generate_ply(xyz, rgb, file_name):
     if not file_name.endswith('.ply'):
         file_name += '.ply'
 
-    header = ["ply", "format ascii 1.0", "element vertex {0}".format(xyz.shape[0]), "property float x", "property float y", 
+    header = ["ply", "format ascii 1.0", "element vertex {0}".format(xyz.shape[0]), "property float x", "property float y",
     "property float z", "property uchar red", "property uchar green", "property uchar blue", "end_header"]
 
     with open(file_name, 'w+') as ply:
@@ -38,7 +38,7 @@ def generate_ply(xyz, rgb, file_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--src', type=str, default='test/')
+    parser.add_argument('--src', type=str, default='depth_16bit_comp_dist/')
     parser.add_argument('--dest', type=str, default='meshlab/')
     parser.add_argument('--focal', type=float, default=721.5377)
     args = parser.parse_args()
