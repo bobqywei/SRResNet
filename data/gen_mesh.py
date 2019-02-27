@@ -1,6 +1,7 @@
 import numpy as np
 import argparse, os, glob
 
+from tqdm import tqdm
 from PIL import Image
 
 # def create_faces(img):
@@ -38,15 +39,21 @@ def generate_ply(xyz, rgb, file_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--src', type=str, default='depth_16bit_comp_dist/')
-    parser.add_argument('--dest', type=str, default='meshlab/')
+    parser.add_argument('--depth', type=str, default='train/depth_16bit_comp/')
+    parser.add_argument('--rgb', type=str, default='train/rgb/')
+    parser.add_argument('--dest', type=str, default='train/meshlab/')
     parser.add_argument('--focal', type=float, default=721.5377)
     args = parser.parse_args()
 
     if not os.path.exists(args.dest):
         os.makedirs(args.dest)
 
-    img = np.array(Image.open(os.path.join(args.src, '82.png')))
-    rgb = np.array(Image.open(os.path.join(args.src, '82_rgb.png')).convert('RGB').resize((1244, 376)))
-    xyz, rgb = get_coords_3d_and_rgb(img, args.focal, rgb)
-    generate_ply(xyz, rgb, os.path.join(args.dest, '82.ply'))
+    depth_paths = sorted(glob.glob(os.path.join(args.depth, '*.png')))
+    rgb_paths = sorted(glob.glob(os.path.join(args.rgb, '*.png')))
+
+    for i in tqdm(range(len(depth_paths))):
+        name = depth_paths[i].split('/')[-1].split('.')[0]
+        img = np.array(Image.open(depth_paths[i]))
+        rgb = np.array(Image.open(rgb_paths[i]).convert('RGB'))
+        xyz, rgb = get_coords_3d_and_rgb(img, args.focal, rgb)
+        generate_ply(xyz, rgb, os.path.join(args.dest, name))

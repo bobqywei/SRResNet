@@ -20,17 +20,14 @@ def gauss2d(shape, sigma=1.0):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--src', type=str)
-parser.add_argument('--name', type=str)
+parser.add_argument('--dest', type=str, default='dest')
 parser.add_argument('--factor', type=int, default=2)
 parser.add_argument('--gauss', action='store_true')
+parser.add_argument('--fix_size_only', action='store_true')
 args = parser.parse_args()
 
-curr_dir = os.path.dirname(os.path.realpath(__file__))
-src_dir = os.path.join(curr_dir, args.src)
-target_dir = os.path.join(curr_dir, args.name)
-
-if not os.path.exists(target_dir):
-	os.makedirs(target_dir)
+if not args.fix_size_only and not os.path.exists(args.dest):
+	os.makedirs(args.dest)
 
 if args.gauss:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -40,25 +37,26 @@ if args.gauss:
         conv.weight.data[0][0] = torch.from_numpy(gauss2d((5,5), sigma=1.0))
     conv.to(device)
 
-img_names = os.listdir(src_dir)
+img_names = os.listdir(args.src)
 for i in tqdm(range(len(img_names))):
-    img = Image.open(os.path.join(src_dir, img_names[i])).convert('RGB')
+    img = Image.open(os.path.join(args.src, img_names[i]))
     w, h = img.size
     if w != 1244 or h != 376:
         img = img.resize((1244, 376))
-        img.save(os.path.join(src_dir, img_names[i]))
+        img.save(os.path.join(args.src, img_names[i]))
         w, h = (1244, 376)
-        
-    img = img.resize((w//args.factor, h//args.factor), resample=Image.BICUBIC)
 
-    if args.gauss:
-        img = tr(img).to(device)
-        # batch dimension
-        img = torch.unsqueeze(img, 0)
-        img_R = conv(torch.unsqueeze(img[:,0,:,:], 0))
-        img_G = conv(torch.unsqueeze(img[:,1,:,:], 0))
-        img_B = conv(torch.unsqueeze(img[:,2,:,:], 0))
-        img = torch.cat((img_R, img_G, img_B), 1)
-        save_image(img, os.path.join(target_dir, img_names[i]))
-    else:
-        img.save(os.path.join(target_dir, img_names[i]))
+    if not args.fix_size_only:
+        img = img.resize((w//args.factor, h//args.factor), resample=Image.BICUBIC)
+
+        if args.gauss:
+            img = tr(img).to(device)
+            # batch dimension
+            img = torch.unsqueeze(img, 0)
+            img_R = conv(torch.unsqueeze(img[:,0,:,:], 0))
+            img_G = conv(torch.unsqueeze(img[:,1,:,:], 0))
+            img_B = conv(torch.unsqueeze(img[:,2,:,:], 0))
+            img = torch.cat((img_R, img_G, img_B), 1)
+            save_image(img, os.path.join(args.dest, img_names[i]))
+        else:
+            img.save(os.path.join(args.dest, img_names[i]))

@@ -36,9 +36,10 @@ def barycentric_interpolate(i_NN, d_NN, i_interp):
     # all weights sum up to 1
     w3 = 1 - w1 - w2
 
-    # Don't interpolate points that are outside of triangle formed by 3 NN points
+    # Don't use barycentric interpolate for points that are outside of triangle formed by 3 NN points
     barycentric_coords = np.column_stack((w1,w2,w3))
     outside_triangle = np.min(barycentric_coords, axis=1) < 0
+    # Use Distance based interpolation instead
     barycentric_coords[outside_triangle] = weights_by_dist(i_NN[outside_triangle], i_interp[outside_triangle])
 
     # Nearest Neighbor Method
@@ -79,8 +80,8 @@ def depth_complete(img, dilation_iters=10):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--src', type=str, default='depth_16bit/')
-    parser.add_argument('--dest', type=str, default='depth_16bit_comp_dist/')
+    parser.add_argument('--src', type=str, default='train/depth_16bit/')
+    parser.add_argument('--dest', type=str, default='train/depth_16bit_comp/')
     args = parser.parse_args()
 
     if not os.path.exists(args.dest):
